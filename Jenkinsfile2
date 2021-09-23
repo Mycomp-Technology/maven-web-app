@@ -1,0 +1,18 @@
+node {
+    def mavenHome = tool name: 'maven3.8.2'
+    
+    state('1-Clone') {
+        git 'https://github.com/Mycomp-Technology/maven-web-app'
+    }
+    state('2-build') {
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+    state('3-CodeQaulity') {
+        //sh "${mavenHome}/bin/mvn sonar:sonar"
+    }
+    state('4-neuuxs') {
+        //sh "${mavenHome}/bin/mvn deploy"
+    }
+    state('5-deployDocker') {
+        //sh 
+    }
