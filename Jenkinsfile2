@@ -1,18 +1,71 @@
+
 node {
-    def mavenHome = tool name: 'maven3.8.2'
-    
-    state('1-Clone') {
-        git 'https://github.com/Mycomp-Technology/maven-web-app'
+  def mavenHome = tool name: 'maven3.8.2'
+  stage('1-Clone') {
+    git credentialsId: 'GitHUB-CREDENTIALS', url: 'https://github.com/Landmark-Technologies/maven-web-application' 
+  }
+  stage('2-mavenBuild') {
+     sh "${mavenHome}/bin/mvn clean package"
+  }
+  stage('3-CodeQuality') {
+     sh "${mavenHome}/bin/mvn sonar:sonar"
+  }
+  stage('4-UploadArticats') {
+    sh "${mavenHome}/bin/mvn deploy"
+  }
+  stage('5-Deploy-UAT') {
+    deploy adapters: [tomcat9(credentialsId: 'deploy', path: '', url: 'http://54.204.83.221:8000/')], contextPath: null, war: 'target/*.war'
+  }
+  stage('6-EmailN') {
+    emailext body: '''Hello Everyone,
+
+Build from Ebay pipeline project.
+
+Landmark Tecxhnologies''', subject: 'Build status', to: 'developers'
+  }
+  stage('Approval'){
+    timeout(time:8, unit: 'HOURS' ) {
+      input message: 'Please verify and approve'
     }
-    state('2-build') {
-        sh "${mavenHome}/bin/mvn clean package"
-    }
-    state('3-CodeQaulity') {
-        //sh "${mavenHome}/bin/mvn sonar:sonar"
-    }
-    state('4-neuuxs') {
-        //sh "${mavenHome}/bin/mvn deploy"
-    }
-    state('5-deployDocker') {
-        //sh 
-    }
+
+  }
+  stage('prod-Deploy'){
+     deploy adapters: [tomcat9(credentialsId: 'deploy', path: '', url: 'http://54.204.83.221:8000/')], contextPath: null, war: 'target/*.war'
+  }
+}
+
+
+node{
+  def mavenHome = tool name: 'maven3.8.1'
+  stage('CodeClone') {
+    git credentialsId: 'git-credentials', url: 'https://github.com/mylandmarktechs/web'
+  }
+  stage('mavenBuild') {
+    sh "${mavenHome}/bin/mvn clean package"
+  }
+
+  stage('CodeQuality') {
+    sh "${mavenHome}/bin/mvn sonar:sonar"
+  // execute the CodeQuality report with sonar
+  }
+  stage('emailQualityIssues') {
+    emailext body: '''Thanks
+
+Landmark Technologies''', recipientProviders: [developers()], subject: 'status of build', to: 'mylandmarktech@gmail.com'
+  }
+
+   stage('UploadNexus') {
+    sh "${mavenHome}/bin/mvn deploy"
+    //mvn deploy  are uploaded in to nexus
+  }
+
+  stage('DeployTomcat') {
+    deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://34.239.155.145:7000/')], contextPath: null, war: 'target/*war'
+  }
+  stage('emailDeployIssues') {
+    emailext body: '''Thanks
+
+Landmark Technologies''', recipientProviders: [developers()], subject: 'status of build', to: 'mylandmarktech@gmail.com'
+  }
+}
+
